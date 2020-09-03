@@ -1,16 +1,13 @@
-import axios from 'axios';
+import { axiosServices } from '@justeat/f-services';
 
 export default {
-    async createAccount (url, tenant, data) {
-        const config = {
-            method: 'post',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept-Tenant': tenant
-            },
-            timeout: 1000
+    async createAccount (url, tenant, data, callback = () => {}) {
+        const headers = {
+            'Content-Type': 'application/json',
+            'Accept-Tenant': tenant
         };
-        return axios
-            .post(url, data, config);
+
+        const client = axiosServices.createClient({ headers, responseCallback: callback });
+        return client.post(url, data);
     }
 };

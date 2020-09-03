@@ -152,18 +152,20 @@
 </template>
 
 <script>
-import { globalisationServices } from '@justeat/f-services';
 import { validationMixin } from 'vuelidate';
 import { required, email, maxLength } from 'vuelidate/lib/validators';
-import { WarningIcon } from '@justeat/f-vue-icons';
+
 import Card from '@justeat/f-card';
 import '@justeat/f-card/dist/f-card.css';
 import FormField from '@justeat/f-form-field';
 import '@justeat/f-form-field/dist/f-form-field.css';
-import FormButton from './Button.vue';
-import tenantConfigs from '../tenants';
-import RegistrationServiceApi from '../services/RegistrationServiceApi';
+import { globalisationServices } from '@justeat/f-services';
+import { WarningIcon } from '@justeat/f-vue-icons';
+
 import EventNames from '../event-names';
+import FormButton from './Button.vue';
+import RegistrationServiceApi from '../services/RegistrationServiceApi';
+import tenantConfigs from '../tenants';
 
 /**
  * Tests for existence of valid chars only in a string.
@@ -205,6 +207,10 @@ export default {
         loginSettings: {
             type: Object,
             default: () => {}
+        },
+        createAccountCallback: {
+            type: [Function, Boolean],
+            default: false
         }
     },
 

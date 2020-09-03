@@ -1,6 +1,6 @@
 import axios from 'axios';
 import MockAdapter from 'axios-mock-adapter';
-import RegistrationServiceApi from '../../services/RegistrationServiceApi';
+import RegistrationServiceApi from '../RegistrationServiceApi';
 
 describe('RegistrationServiceApi', () => {
     const axiosMock = new MockAdapter(axios);
