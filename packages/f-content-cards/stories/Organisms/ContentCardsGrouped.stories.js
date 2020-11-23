@@ -1,9 +1,10 @@
 import { action } from '@storybook/addon-actions';
 import { withA11y } from '@storybook/addon-a11y';
-import mock, { proxy } from 'xhr-mock';
+// import mock, { proxy } from 'xhr-mock';
 import ContentCards from '../../src/components/ContentCards.vue';
-import data from '../mockData/data';
-import cards from '../mockData/cards';
+// import data from '../mockData/data';
+// import cards from '../mockData/cards';
+import { makeServer } from '../mocks/mirage-server';
 
 /**
  * Resets all locally stored braze data so that the stubbed data is always fresh on page load
@@ -74,17 +75,19 @@ export function ContentCardsBrazeGroup (args, { argTypes }) {
         beforeCreate () {
             resetBrazeData();
 
-            mock.teardown();
-            mock.setup();
-            mock.post(/\/api\/v3\/content_cards\/sync\/?/, {
-                status: 201,
-                body: JSON.stringify(cards())
-            });
-            mock.post(/\/api\/v3\/data\/?/, {
-                status: 201,
-                body: JSON.stringify(data())
-            });
-            mock.use(proxy);
+            makeServer();
+
+            // mock.teardown();
+            // mock.setup();
+            // mock.post(/\/api\/v3\/content_cards\/sync\/?/, {
+            //     status: 201,
+            //     body: JSON.stringify(cards())
+            // });
+            // mock.post(/\/api\/v3\/data\/?/, {
+            //     status: 201,
+            //     body: JSON.stringify(data())
+            // });
+            // mock.use(proxy);
         },
 
         template
