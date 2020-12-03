@@ -1,9 +1,9 @@
 <template>
     <div
         ref="cookieBanner"
-        :class="[$style['c-cookieBanner'], $style['c-cookieBanner-overlay']]"
+        :class="[$style['c-cookieBanner'], $style['c-cookieBanner-overlay'], { [$style['c-cookieBanner--hidden']]: isHidden }]"
         attr="data-cookie-consent-overlay"
-        :aria-hidden="isOpen">
+        :aria-hidden="isHidden">
         <div
             :class="$style['c-cookieBanner-card']">
             <div
@@ -80,14 +80,14 @@ export default {
     },
 
     props: {
-        isOpen: {
-            type: Boolean,
-            default: false
-        },
-
         locale: {
             type: String,
             default: 'en-GB'
+        },
+
+        isHidden: {
+            type: Boolean,
+            default: false
         }
     },
 
@@ -103,7 +103,7 @@ export default {
     },
 
     mounted () {
-        this.focusOnTitle ();
+        this.focusOnTitle();
     },
 
     methods: {
@@ -115,15 +115,15 @@ export default {
             title.firstChild.focus();
         },
         /**
-         * Check for excluded cookies/storage
-         */
-        isNotExcluded () {
-            return null;
-        },
-        /**
          * Push tracking events
          */
         dataLayerPush () {
+            return null;
+        },
+        /**
+         * Check for excluded cookies/storage
+         */
+        isNotExcluded () {
             return null;
         },
         /**
@@ -167,18 +167,6 @@ export default {
          */
         nonAcceptActions () {
             return null;
-        },
-        /**
-         * Hide the cookie consent banner
-         */
-        hideBanner () {
-            return null;
-        },
-        /**
-         * Show the cookie consent banner
-         */
-        showBanner () {
-            return null;
         }
     }
 };
@@ -197,6 +185,10 @@ export default {
     right: 0;
     background-color: rgba(0, 0, 0, 0.7);
     z-index: 99999991;
+}
+
+.c-cookieBanner--hidden {
+    display: none;
 }
 
 .c-cookieBanner-card {

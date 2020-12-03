@@ -1,4 +1,4 @@
-import { select } from '@storybook/addon-knobs';
+import { select, boolean } from '@storybook/addon-knobs';
 import { withA11y } from '@storybook/addon-a11y';
 import CookieBanner from '../src/components/CookieBanner.vue';
 
@@ -12,9 +12,15 @@ export const CookieBannerComponent = () => ({
     props: {
         locale: {
             default: select('Locale', ['en-GB', 'es-ES'])
+        },
+
+        isHidden: {
+            default: boolean('Is hidden', false)
         }
     },
-    template: '<cookie-banner :locale="locale"/>'
+    template: `<cookie-banner
+        :locale="locale"
+        :is-hidden="isHidden" />`
 });
 
 CookieBannerComponent.storyName = 'f-cookie-banner';
