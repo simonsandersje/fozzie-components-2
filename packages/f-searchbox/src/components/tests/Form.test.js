@@ -1,8 +1,36 @@
-import { shallowMount } from '@vue/test-utils';
+import { shallowMount, createLocalVue } from '@vue/test-utils';
+import Vuex from 'vuex';
 import Form from '../Form.vue';
 import * as processLocationCookie from '../../services/general.services';
 import * as searchService from '../../services/search.services';
 import { getLastLocation } from '../../utils/helpers';
+
+const localVue = createLocalVue();
+
+localVue.use(Vuex);
+
+const mockState = {
+    errors: [],
+    isValid: true
+};
+
+const mockActions = {
+    setErrors: jest.fn(),
+    setIsValid: jest.fn(),
+    setIsDirty: jest.fn(),
+    setGeoLocationAvailability: jest.fn()
+};
+
+const createStore = (state = mockState, actions = mockActions) => new Vuex.Store({
+    modules: {
+        searchbox: {
+            namespaced: true,
+            state,
+            actions
+        }
+    },
+    hasModule: jest.fn(() => true)
+});
 
 describe('`Form`', () => {
     let event;
@@ -23,7 +51,11 @@ describe('`Form`', () => {
             }
         };
 
-        const wrapper = shallowMount(Form, { propsData });
+        const wrapper = shallowMount(Form, {
+            propsData,
+            store: createStore(),
+            localVue
+        });
 
         // Act & Assert
         expect(wrapper.exists()).toBe(true);
@@ -43,7 +75,11 @@ describe('`Form`', () => {
                     }
                 };
 
-                const wrapper = shallowMount(Form, { propsData });
+                const wrapper = shallowMount(Form, {
+                    propsData,
+                    store: createStore(),
+                    localVue
+                });
 
                 // Act & Assert
                 expect(wrapper.vm.submit).toBeDefined();
@@ -61,7 +97,11 @@ describe('`Form`', () => {
                             isValid: jest.fn(() => [])
                         }
                     };
-                    const wrapper = shallowMount(Form, { propsData });
+                    const wrapper = shallowMount(Form, {
+                        propsData,
+                        store: createStore(),
+                        localVue
+                    });
                     const address = 'Eridanus';
                     wrapper.setData({ address });
 
@@ -86,7 +126,12 @@ describe('`Form`', () => {
                                 isValid: jest.fn(() => true)
                             }
                         };
-                        const wrapper = shallowMount(Form, { propsData });
+                        const wrapper = shallowMount(Form, {
+                            propsData,
+                            store: createStore(),
+                            localVue
+                        });
+
                         const spy = jest.spyOn(wrapper.vm, 'searchPreviouslySavedAddress');
                         wrapper.setData({ address, lastAddress: address });
 
@@ -110,10 +155,12 @@ describe('`Form`', () => {
                         }
                     };
                     const wrapper = shallowMount(Form, {
-                        propsData
+                        propsData,
+                        store: createStore(),
+                        localVue
                     });
                     const address = 'AR511AR';
-                    const spy = jest.spyOn(wrapper.vm.store, 'dispatch');
+                    const spy = jest.spyOn(wrapper.vm, 'setIsValid');
 
                     wrapper.setData({ address });
 
@@ -121,7 +168,7 @@ describe('`Form`', () => {
                     wrapper.vm.submit(event);
 
                     // Assert
-                    expect(spy).toHaveBeenCalledWith('setIsValid', true);
+                    expect(spy).toHaveBeenCalledWith(true);
                 });
 
                 it('should dispatch the action `setIsValid` with [] when the address is not valid', () => {
@@ -135,16 +182,20 @@ describe('`Form`', () => {
                             isValid: jest.fn(() => [])
                         }
                     };
-                    const wrapper = shallowMount(Form, { propsData });
+                    const wrapper = shallowMount(Form, {
+                        propsData,
+                        store: createStore(),
+                        localVue
+                    });
                     const address = 'Eridanus';
                     wrapper.setData({ address });
-                    const spy = jest.spyOn(wrapper.vm.store, 'dispatch');
+                    const spy = jest.spyOn(wrapper.vm, 'setIsValid');
 
                     // Act
                     wrapper.vm.submit(event);
 
                     // Assert
-                    expect(spy).toHaveBeenCalledWith('setIsValid', []);
+                    expect(spy).toHaveBeenCalledWith([]);
                 });
 
                 describe('when `address` `isValid` is truthy', () => {
@@ -160,14 +211,16 @@ describe('`Form`', () => {
                             }
                         };
                         const wrapper = shallowMount(Form, {
-                            propsData
+                            propsData,
+                            store: createStore(),
+                            localVue
                         });
 
                         // Act
                         wrapper.vm.submit(event);
 
                         // Assert
-                        expect(wrapper.vm.store.state.errors).toEqual([]);
+                        expect(wrapper.vm.errors).toEqual([]);
                     });
 
                     it('should invoke `processLocationCookie` to set je location cookies manually if `shouldSetCookies` is enabled', () => {
@@ -183,7 +236,9 @@ describe('`Form`', () => {
                             }
                         };
                         const wrapper = shallowMount(Form, {
-                            propsData
+                            propsData,
+                            store: createStore(),
+                            localVue
                         });
 
                         const spy = jest.spyOn(processLocationCookie, 'processLocationCookie');
@@ -209,7 +264,9 @@ describe('`Form`', () => {
                             }
                         };
                         const wrapper = shallowMount(Form, {
-                            propsData
+                            propsData,
+                            store: createStore(),
+                            localVue
                         });
 
                         wrapper.setData({ shouldClearAddressOnValidSubmit: true });
@@ -227,6 +284,7 @@ describe('`Form`', () => {
                 describe('when `address` `isValid` is falsy', () => {
                     it('should prevent default to stop the form from submitting an invalid search', () => {
                         // Arrange
+                        mockState.isValid = ['Error'];
                         const propsData = {
                             config: {
                                 address: 'Cassiopeia',
@@ -237,7 +295,9 @@ describe('`Form`', () => {
                             }
                         };
                         const wrapper = shallowMount(Form, {
-                            propsData
+                            propsData,
+                            store: createStore(),
+                            localVue
                         });
 
                         // Act
@@ -249,6 +309,7 @@ describe('`Form`', () => {
 
                     it('should dispatch the action `setErrors` to set the correct errors', () => {
                         // Arrange
+                        mockState.isValid = ['Error'];
                         const propsData = {
                             config: {
                                 address: 'Cassiopeia',
@@ -259,15 +320,17 @@ describe('`Form`', () => {
                             }
                         };
                         const wrapper = shallowMount(Form, {
-                            propsData
+                            propsData,
+                            store: createStore(),
+                            localVue
                         });
-                        const spy = jest.spyOn(wrapper.vm.store, 'dispatch');
+                        const spy = jest.spyOn(wrapper.vm, 'setErrors');
 
                         // Act
                         wrapper.vm.submit(event);
 
                         // Assert
-                        expect(spy).toHaveBeenCalledWith('setErrors', []);
+                        expect(spy).toHaveBeenCalledWith(['Error']);
                     });
                 });
             });
@@ -285,7 +348,11 @@ describe('`Form`', () => {
                         isValid: jest.fn(() => [])
                     }
                 };
-                const wrapper = shallowMount(Form, { propsData });
+                const wrapper = shallowMount(Form, {
+                    propsData,
+                    store: createStore(),
+                    localVue
+                });
 
                 // Act & Assert
                 expect(wrapper.vm.clearAddressValue).toBeDefined();
@@ -304,7 +371,11 @@ describe('`Form`', () => {
                                 isValid: jest.fn(() => [])
                             }
                         };
-                        const wrapper = shallowMount(Form, { propsData });
+                        const wrapper = shallowMount(Form, {
+                            propsData,
+                            store: createStore(),
+                            localVue
+                        });
                         wrapper.setData({ shouldClearAddressOnValidSubmit: true });
 
                         // Act
@@ -329,7 +400,11 @@ describe('`Form`', () => {
                         isValid: jest.fn(() => [])
                     }
                 };
-                const wrapper = shallowMount(Form, { propsData });
+                const wrapper = shallowMount(Form, {
+                    propsData,
+                    store: createStore(),
+                    localVue
+                });
 
                 // Act & Assert
                 expect(wrapper.vm.searchPreviouslySavedAddress).toBeDefined();
@@ -347,7 +422,11 @@ describe('`Form`', () => {
                             isValid: jest.fn(() => [])
                         }
                     };
-                    const wrapper = shallowMount(Form, { propsData });
+                    const wrapper = shallowMount(Form, {
+                        propsData,
+                        store: createStore(),
+                        localVue
+                    });
                     wrapper.setData({ formUrl: 'search/Andromeda', onSubmit: false });
                     wrapper.vm.$refs.form = '<form></form>';
                     wrapper.vm.locationForm = '';

@@ -3,6 +3,48 @@
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+v4.0.0-beta.6
+------------------------------
+*December 1, 2020*
+
+### Removed
+- Optional chaining syntax (Breaks storybook).
+
+
+v4.0.0-beta.5
+------------------------------
+*December 1, 2020*
+
+### Added
+- Geo location feature plus components, `FormSearchGeo.vue`.
+- Tenant tests.
+- css/scss to `moduleNameMapper` in `jest.config.js`
+
+### Changed
+- Renamed street & geo location component to `FormSearchInnerFieldsWrapper.vue`.
+
+### Fixed
+- IE config missing validation properties.
+- General tidy up of values being passed around.
+
+
+v4.0.0-beta.4
+------------------------------
+*November 25, 2020*
+
+### Added
+
+- demo.js & index.html to serve up local instance of the component.
+
+### Removed
+
+- Demo.vue in favour of demo.js & index.html
+
+### Fixed
+
+- Vuex store mappings in form component, now using `mapState` & `mapActions`.
+
+
 v4.0.0-beta.3
 ------------------------------
 *November 20, 2020*

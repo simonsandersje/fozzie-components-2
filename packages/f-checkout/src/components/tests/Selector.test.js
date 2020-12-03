@@ -1,41 +1,153 @@
-import { shallowMount } from '@vue/test-utils';
+import Vuex from 'vuex';
+import { VueI18n } from '@justeat/f-globalisation';
+import { shallowMount, createLocalVue, mount } from '@vue/test-utils';
+import { CHECKOUT_METHOD_DELIVERY, CHECKOUT_METHOD_COLLECTION } from '../../constants';
 import Selector from '../Selector.vue';
+import tenantConfigs from '../../tenants';
+
+const localVue = createLocalVue();
+
+localVue.use(VueI18n);
+localVue.use(Vuex);
+
+const fulfillmentTimes = [
+    {
+        from: '2020-01-01T00:00+00:00',
+        label: {
+            text: 'time 1'
+        },
+        selected: false,
+        to: '2020-01-01T00:00+00:00'
+    }
+];
+
+const defaultState = {
+    id: '',
+    serviceType: CHECKOUT_METHOD_DELIVERY,
+    customer: {
+        firstName: 'John',
+        mobileNumber: '+447111111111'
+    },
+    fulfillment: {
+        times: fulfillmentTimes,
+        address: {
+            line1: '1 Bristol Road',
+            line2: 'Flat 1',
+            city: 'Bristol',
+            postcode: 'BS1 1AA'
+        }
+    },
+    notes: [],
+    isFulfillable: true,
+    notices: [],
+    messages: []
+};
+
+const defaultActions = {
+    getCheckout: jest.fn(),
+    postCheckout: jest.fn()
+};
+
+const i18n = {
+    locale: 'en-GB',
+    messages: tenantConfigs['en-GB']
+};
+
+const createStore = (state = defaultState, actions = defaultActions) => new Vuex.Store({
+    modules: {
+        checkout: {
+            namespaced: true,
+            state,
+            actions
+        }
+    },
+    hasModule: jest.fn(() => true)
+});
 
 describe('Selector', () => {
     allure.feature('Checkout-Selector');
     const propsData = {};
 
     it('should be defined', () => {
-        const wrapper = shallowMount(Selector, { propsData });
+        // Arrange & Act
+        const wrapper = shallowMount(Selector, {
+            store: createStore(),
+            i18n,
+            localVue,
+            propsData
+        });
+
+        // Assert
         expect(wrapper.exists()).toBe(true);
     });
 
-    describe('data ::', () => {
-        describe('selectedTime ::', () => {
-            // TODO: Component is working correctly but the tests do not work with `scss modules`
+    describe('computed ::', () => {
+        describe('orderMethod', () => {
+            it('should show the delivery label when the `serviceType` is `delivery`', () => {
+                // Arrange & Act
+                const wrapper = mount(Selector, {
+                    store: createStore({ ...defaultState, serviceType: CHECKOUT_METHOD_DELIVERY }),
+                    i18n,
+                    localVue,
+                    propsData
+                });
 
-            xit('should add class to display label above option when not null', async () => {
-                // Arrange
-                const data = { selectedTime: 'testTime' };
-                const wrapper = shallowMount(Selector, { propsData });
-                const selector = wrapper.find("[data-test-id='form-select']");
-
-                // Act
-                wrapper.setData(data);
-                await wrapper.vm.$nextTick();
+                const selector = wrapper.find('[data-test-id="form-select"]');
 
                 // Assert
-                expect(wrapper.html()).toContain('o-form-select--float');
-                expect(selector.classes()).toContain('o-form-select--float');
+                expect(selector.html()).toMatchSnapshot();
             });
 
-            it('should remove class to display label centrally when null', () => {
+            it('should show the collection label when the `serviceType` is `collection`', () => {
                 // Arrange & Act
-                const wrapper = shallowMount(Selector, { propsData });
-                const selector = wrapper.find("[data-test-id='form-select']");
+                const wrapper = mount(Selector, {
+                    store: createStore({ ...defaultState, serviceType: CHECKOUT_METHOD_COLLECTION }),
+                    i18n,
+                    localVue,
+                    propsData
+                });
+
+                const selector = wrapper.find('[data-test-id="form-select"]');
 
                 // Assert
-                expect(selector.classes()).not.toContain('o-form-select--float');
+                expect(selector.html()).toMatchSnapshot();
+            });
+        });
+
+        describe('fulfillmentTimes', () => {
+            it('should create an array of labels from `fulfillment.times` state', () => {
+                // Arrange && Act
+                const wrapper = shallowMount(Selector, {
+                    store: createStore({ ...defaultState }),
+                    i18n,
+                    localVue,
+                    propsData
+                });
+
+                const expectedTimes = ['time 1'];
+
+                // Assert
+                expect(wrapper.vm.fulfillmentTimes).toEqual(expectedTimes);
+            });
+        });
+    });
+
+    describe('methods ::', () => {
+        describe('selectionChanged', () => {
+            it('should update `fulfillment.times` time to be selected', () => {
+                // Arrange
+                const wrapper = shallowMount(Selector, {
+                    store: createStore({ ...defaultState }),
+                    i18n,
+                    localVue,
+                    propsData
+                });
+
+                // Act
+                wrapper.vm.selectionChanged('time 1');
+
+                // Assert
+                expect(wrapper.vm.fulfillment.times[0].selected).toBe(true);
             });
         });
     });

@@ -1,6 +1,6 @@
 import validations from '../src/validations';
 
-const { getFormValidationState, isValidPostcode } = validations;
+const { getFormValidationState, isValidPostcode, isValidPhoneNumber } = validations;
 
 describe('getFormValidationState', () => {
     it('should separate valid and invalid fields', () => {
@@ -19,6 +19,32 @@ describe('getFormValidationState', () => {
             },
             yetAnotherValidation: {
                 $invalid: true
+            },
+            $flattenParams () {
+                return [
+                    {
+                        name: 'required',
+                        params: {
+                            type: 'required'
+                        },
+                        path: ['otherValidation']
+                    },
+                    {
+                        name: 'minLength',
+                        params: {
+                            type: 'minLength',
+                            min: 10
+                        },
+                        path: ['minLengthValidation']
+                    },
+                    {
+                        name: 'required',
+                        params: {
+                            type: 'required'
+                        },
+                        path: ['yetAnotherValidation']
+                    }
+                ];
             }
         };
 
@@ -29,6 +55,75 @@ describe('getFormValidationState', () => {
         expect(actual).toStrictEqual({
             validFields: ['minLengthValidation'],
             invalidFields: ['otherValidation', 'yetAnotherValidation']
+        });
+    });
+
+    it('should handle nested validation objects and return the full path of them in valid and invalid fields', () => {
+        // Arrange
+        const v = {
+            $params: {
+                parentObjectValidation: {},
+                minLengthValidation: {},
+                yetAnotherValidation: {}
+            },
+            minLengthValidation: {
+                $invalid: false
+            },
+            parentObjectValidation: {
+                $invalid: true,
+                childObjectValidation: {
+                    $invalid: true,
+                    grandChildObjectValidation: {
+                        $invalid: true
+                    }
+                }
+            },
+            yetAnotherValidation: {
+                $invalid: true
+            },
+            $flattenParams () {
+                return [
+                    {
+                        name: 'required',
+                        params: {
+                            type: 'required'
+                        },
+                        path: ['parentObjectValidation', 'childObjectValidation', 'grandChildObjectValidation']
+                    },
+                    {
+                        name: 'minLength',
+                        params: {
+                            type: 'minLength',
+                            min: 50
+                        },
+                        path: ['parentObjectValidation', 'childObjectValidation', 'grandChildObjectValidation']
+                    },
+                    {
+                        name: 'minLength',
+                        params: {
+                            type: 'minLength',
+                            min: 10
+                        },
+                        path: ['minLengthValidation']
+                    },
+                    {
+                        name: 'required',
+                        params: {
+                            type: 'required'
+                        },
+                        path: ['yetAnotherValidation']
+                    }
+                ];
+            }
+        };
+
+        // Act
+        const actual = getFormValidationState(v);
+
+        // Assert
+        expect(actual).toStrictEqual({
+            validFields: ['minLengthValidation'],
+            invalidFields: ['parentObjectValidation.childObjectValidation.grandChildObjectValidation', 'yetAnotherValidation']
         });
     });
 });
@@ -49,6 +144,25 @@ describe('isValidPostcode', () => {
     ])('should validate %s as %s', (postcode, expected) => {
         // Act
         const actual = isValidPostcode(postcode);
+
+        // Assert
+        expect(actual).toBe(expected);
+    });
+});
+
+describe('isValidPhoneNumber', () => {
+    it.each([
+        ['0711111111', true],
+        ['+447111111111', true],
+        ['0711 1111 111', false],
+        ['07111', false],
+        ['07!!!!', false],
+        ['not even trying', false],
+        ['', false],
+        [null, false]
+    ])('should validate %s as %s with `en-GB` locale', (number, expected) => {
+        // Act
+        const actual = isValidPhoneNumber(number, 'en-GB');
 
         // Assert
         expect(actual).toBe(expected);
