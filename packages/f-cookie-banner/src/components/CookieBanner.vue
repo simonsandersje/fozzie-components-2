@@ -48,7 +48,7 @@
                     role="button"
                     data-button-accept
                     is-full-width
-                    @click="acceptActions">
+                    @click.native="acceptActions">
                     {{ copy.buttonText2 }}
                 </button-component>
                 <button-component
@@ -57,7 +57,7 @@
                     button-type="ghost"
                     data-button-nonaccept
                     is-full-width
-                    @click="nonAcceptActions">
+                    @click.native="nonAcceptActions">
                     {{ copy.buttonText1 }}
                 </button-component>
             </div>
@@ -88,6 +88,11 @@ export default {
         isHidden: {
             type: Boolean,
             default: false
+        },
+
+        cookieExpiry: {
+            type: Number,
+            default: 7776000
         }
     },
 
@@ -103,10 +108,28 @@ export default {
     },
 
     mounted () {
+        this.removeLegacyCookieBanners();
+        this.checkCookieBannerCookie();
         this.focusOnTitle();
     },
 
     methods: {
+        /**
+         * Actions for "Accept all cookies" button
+         */
+        acceptActions () {
+            this.setCookieBannerCookie('full');
+            this.dataLayerPush('full');
+            this.isHidden = true;
+        },
+        /**
+         * Actions for "Accept only required cookies" button
+         */
+        nonAcceptActions () {
+            this.setCookieBannerCookie('necessary');
+            this.dataLayerPush('necessary');
+            this.isHidden = true;
+        },
         /**
          * Set focus to the cookie consent banner title for accessibility
          */
@@ -115,21 +138,52 @@ export default {
             title.firstChild.focus();
         },
         /**
+         * Check if the cookie banner has been shown to this user
+         */
+        checkCookieBannerCookie () {
+            this.isHidden = this.$cookies.get('je-cookieConsent') === 'full' || this.$cookies.get('je-cookieConsent') === 'necessary';
+        },
+        /**
+         * Set the cookie for the user's choice
+         */
+        setCookieBannerCookie (cookieValue) {
+            this.$cookies.set('je-cookieConsent', cookieValue, {
+                path: '/',
+                maxAge: this.cookieExpiry
+            });
+        },
+        /**
+         * Set the legacy cookie banner cookie
+         */
+        setLegacyCookieBannerCookie () {
+            this.$cookies.set('je-banner_cookie', '2', {
+                path: '/',
+                maxAge: this.cookieExpiry
+            });
+        },
+        /**
+         * Remove legacy cookie banners (they should be removed in the consuming codebase, but just to be sure...)
+         */
+        removeLegacyCookieBanners () {
+            const oldCookieBanner = document.querySelector('[data-cookiebanner]');
+            const sitecoreCookieBanner = document.getElementsByClassName('cookie-policy')[0];
+            const menuWebCookieBanner = document.querySelector('[data-cookie-anchor]');
+            if (typeof oldCookieBanner !== 'undefined' && oldCookieBanner !== null) oldCookieBanner.innerHTML = '';
+            if (typeof sitecoreCookieBanner !== 'undefined' && sitecoreCookieBanner !== null) sitecoreCookieBanner.innerHTML = '';
+            if (typeof menuWebCookieBanner !== 'undefined' && menuWebCookieBanner !== null) menuWebCookieBanner.innerHTML = '';
+            this.setLegacyCookieBannerCookie();
+        },
+        /**
          * Push tracking events
          */
-        dataLayerPush () {
-            return null;
+        dataLayerPush (consentLevel) {
+            const dataLayer = window.dataLayer || [];
+            dataLayer.push({ event: 'trackConsent', userData: { consent: consentLevel } });
         },
         /**
          * Check for excluded cookies/storage
          */
         isNotExcluded () {
-            return null;
-        },
-        /**
-         * Set the cookie for the user's choice
-         */
-        setCookie () {
             return null;
         },
         /**
@@ -149,121 +203,102 @@ export default {
          */
         resendEvents () {
             return null;
-        },
-        /**
-         * Remove legacy cookie banners (they should be removed in the consuming codebase, but just to be sure...)
-         */
-        removeLegacyCookieBanners () {
-            return null;
-        },
-        /**
-         * Actions for "Accept all cookies" button
-         */
-        acceptActions () {
-            return null;
-        },
-        /**
-         * Actions for "Accept only required cookies" button
-         */
-        nonAcceptActions () {
-            return null;
         }
     }
 };
 </script>
 
 <style lang="scss" module>
-.c-cookieBanner {
-    font-family: $font-family-base;
-}
-
-.c-cookieBanner-overlay {
-    position: fixed;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background-color: rgba(0, 0, 0, 0.7);
-    z-index: 99999991;
-}
-
-.c-cookieBanner--hidden {
-    display: none;
-}
-
-.c-cookieBanner-card {
-    background-color: $white;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    z-index: 99999992;
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-}
-
-.c-cookieBanner-CTA {
-    min-width: 352px;
-}
-
-.c-cookieBanner-text {
-    margin: 0;
-    padding: 0;
-}
-
-.c-cookieBanner-link {
-    color: $color-link-default;
-}
-
-.c-cookieBanner-title {
-    font-size: 24px;
-    @include font-size(heading-m);
-    font-weight: $font-weight-bold;
-    margin: spacing() 0;
-    padding: 0;
-    color: $color-headings;
-    &:hover,
-    &:focus {
-        a {
-            text-decoration: none;
-        }
+    .c-cookieBanner {
+        font-family: $font-family-base;
     }
-}
 
-.c-cookieBanner-content,
-.c-cookieBanner-CTA {
-    padding: spacing(x4);
-    margin: 0 auto;
-}
+    .c-cookieBanner-overlay {
+        position: fixed;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background-color: rgba(0, 0, 0, 0.7);
+        z-index: 99999991;
+    }
 
-@media (max-width: 768px) {
+    .c-cookieBanner--hidden {
+        display: none;
+    }
+
     .c-cookieBanner-card {
-        flex-direction: column;
-        padding: spacing(x2) 0;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        background-color: $white;
+        z-index: 99999992;
+    }
+
+    .c-cookieBanner-CTA {
+        min-width: 352px;
+    }
+
+    .c-cookieBanner-text {
+        margin: 0;
+        padding: 0;
+    }
+
+    .c-cookieBanner-link {
+        color: $color-link-default;
+    }
+
+    .c-cookieBanner-title {
+        @include font-size(heading-m);
+        font-weight: $font-weight-bold;
+        margin: spacing() 0;
+        padding: 0;
+        color: $color-headings;
+        &:hover,
+        &:focus {
+            a {
+                text-decoration: none;
+            }
+        }
     }
 
     .c-cookieBanner-content,
     .c-cookieBanner-CTA {
-        padding: spacing(x0.5) spacing(x3);
+        margin: 0 auto;
+        padding: spacing(x4);
     }
 
-    .c-cookieBanner-CTA {
-        min-width: initial;
-        display: flex;
-        flex-direction: row-reverse;
-        margin: 0;
-    }
-}
+    @media (max-width: 768px) {
+        .c-cookieBanner-card {
+            flex-direction: column;
+            padding: spacing(x2) 0;
+        }
 
-@media (max-width: 600px) {
-    .c-cookieBanner-title {
-        @include font-size(heading-s);
+        .c-cookieBanner-content,
+        .c-cookieBanner-CTA {
+            padding: spacing(x0.5) spacing(x3);
+        }
+
+        .c-cookieBanner-CTA {
+            min-width: initial;
+            display: flex;
+            flex-direction: row-reverse;
+            margin: 0;
+        }
     }
 
-    .c-cookieBanner-CTA {
-        display: block;
-        margin: 0;
+    @media (max-width: 600px) {
+        .c-cookieBanner-title {
+            @include font-size(heading-s);
+        }
+
+        .c-cookieBanner-CTA {
+            display: block;
+            margin: 0;
+        }
     }
-}
 </style>
