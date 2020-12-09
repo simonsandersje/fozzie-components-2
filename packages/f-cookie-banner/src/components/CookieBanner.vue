@@ -128,6 +128,7 @@ export default {
         nonAcceptActions () {
             this.setCookieBannerCookie('necessary');
             this.dataLayerPush('necessary');
+            this.resendEvents();
             this.isHidden = true;
         },
         /**
@@ -183,26 +184,34 @@ export default {
         /**
          * Check for excluded cookies/storage
          */
-        isNotExcluded () {
-            return null;
-        },
-        /**
-         * Remove all cookies not in the exclusion list
-         */
-        removeCookies () {
-            return null;
-        },
-        /**
-         * Remove all local storage not in the exclusion list
-         */
-        removeStorage () {
-            return null;
+        isNotExcluded (cookieName) {
+            let isMatch = true;
+            let i;
+            const excludedList = this.copy.cookieExclusionList;
+            for (i = 0; i < excludedList.length; i++) {
+                const regex = new RegExp(excludedList[i].replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
+                if (regex.test(cookieName) && isMatch) isMatch = false;
+            }
+            return isMatch;
         },
         /**
          * Resend GTM events
          */
         resendEvents () {
-            return null;
+            const dataLayer = window.dataLayer || [];
+            const excludeEvents = ['gtm.js', 'gtm.click', 'gtm.linkClick', 'gtm.triggerGroup', 'trackConsent', 'showConsent'];
+            let i;
+            for (i = 0; i < dataLayer.length; i++) {
+                if (dataLayer[i].event && !excludeEvents.includes(dataLayer[i].event)) {
+                    dataLayer[i].eventResent = dataLayer[i].event;
+                    dataLayer[i]['gtm.uniqueEventId'] = Math.floor(100000 + Math.random() * 900000);
+                    dataLayer.push(dataLayer[i]);
+                }
+                if (dataLayer[i].event && dataLayer[i].event === 'trackConsent' && (dataLayer[i].userData.consent === 'full' || dataLayer[i].userData.consent === 'necessary')) {
+                    dataLayer.push({ eventResent: false });
+                    break;
+                }
+            }
         }
     }
 };
