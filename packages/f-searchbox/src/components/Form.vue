@@ -22,7 +22,8 @@
                 :service="service"
                 :should-display-custom-autocomplete="service.isAutocompleteEnabled"
                 :copy="copy"
-                :is-compressed="isCompressed" />
+                :is-compressed="isCompressed"
+                v-on="$listeners" />
 
             <form-search-button
                 :copy="copy"
@@ -56,13 +57,19 @@ import FormSearchField from './formElements/FormSearchField.vue';
 import FormSearchButton from './formElements/FormSearchButton.vue';
 import FormSearchSuggestions from './formElements/FormSearchSuggestions.vue';
 import searchboxModule from '../store/searchbox.module';
-import { getLastLocation } from '../utils/helpers';
+import { getLastLocation, normalisePostcode } from '../utils/helpers';
 import { search, selectedSuggestion } from '../services/search.services';
 import {
     processLocationCookie,
     onCustomSubmit,
     generateFormQueryUrl
 } from '../services/general.services';
+import {
+    SUBMIT_SAVED_ADDRESS,
+    SUBMIT_VALID_ADDRESS,
+    SEARCHBOX_ERROR,
+    TRACK_POSTCODE_CHANGED
+} from '../event-types';
 
 export default {
     components: {
@@ -253,6 +260,7 @@ export default {
 
             if (this.hasLastSavedAddress) {
                 e.preventDefault();
+                this.$emit(SUBMIT_SAVED_ADDRESS);
                 return this.searchPreviouslySavedAddress(e);
             }
 
@@ -260,12 +268,13 @@ export default {
 
             if (this.isValid === true) {
                 this.setErrors([]);
-                processLocationCookie(this.shouldSetCookies, this.address);
                 this.clearAddressValue(this.shouldClearAddressOnValidSubmit);
                 onCustomSubmit(this.onSubmit, this.address, e);
+                this.verifyHasPostcodeChanged();
 
                 if (this.service.isAutocompleteEnabled) {
                     e.preventDefault();
+
                     const info = await this.onSelectedSuggestion();
 
                     // if the address is still missing fields, return here
@@ -273,11 +282,18 @@ export default {
                         return false;
                     }
 
-                    // TODO process the je last location cookie for international markets...
+                    // Process international based location cookies `je-last-*`
+                    processLocationCookie(this.shouldSetCookies, info);
+                } else {
+                    // Process standard address based location cookies `je-location`
+                    processLocationCookie(this.shouldSetCookies, this.address);
                 }
+
+                this.$emit(SUBMIT_VALID_ADDRESS);
             } else {
                 e.preventDefault();
                 this.setErrors(this.isValid);
+                this.$emit(SEARCHBOX_ERROR, this.errors);
             }
 
             return true;
@@ -293,16 +309,25 @@ export default {
          * `keyboardSuggestionIndex` (enter key event) depending on which was used
          * the address is set accordingly.
          *
+         * Returns a promise `locationInformation` so we can resolve/await the location information
+         * within the `submit` handler, used for processing & setting cookies when the consuming app
+         * needs to manually set them (e.g. menu).
+         *
          * */
         onSelectedSuggestion (index) {
-            selectedSuggestion(
+            this.address = this.suggestionFormat(this.suggestions[index || this.keyboardSuggestionIndex]);
+
+            const locationInformation = selectedSuggestion(
                 this.service,
                 this.suggestions,
                 this.requiredFields,
                 this.streetNumber,
                 index,
-                this.keyboardSuggestionIndex
-            ).then(value => {
+                this.keyboardSuggestionIndex,
+                this.onSubmit
+            );
+
+            locationInformation.then(value => {
                 if (value && value.errors) {
                     this.setErrors(value.errors);
                 }
@@ -312,7 +337,7 @@ export default {
                 }
             });
 
-            this.address = this.suggestionFormat(this.suggestions[index || this.keyboardSuggestionIndex]);
+            return locationInformation;
         },
 
         /**
@@ -343,6 +368,21 @@ export default {
             if (shouldClearAddressOnValidSubmit) {
                 this.address = '';
                 this.setIsDirty(false);
+            }
+        },
+
+        /**
+         * Emits a track postcode change event if the users last address (i.e je-location)
+         * has changed. For example, if they were to change & submit a new valid address in
+         * searchbox.
+         *
+         */
+        verifyHasPostcodeChanged () {
+            if (
+                this.lastAddress
+                && normalisePostcode(this.lastAddress) !== normalisePostcode(this.address)
+            ) {
+                this.$emit(TRACK_POSTCODE_CHANGED);
             }
         }
     }

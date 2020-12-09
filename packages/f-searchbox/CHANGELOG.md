@@ -3,6 +3,29 @@
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+v4.0.0-beta.9
+------------------------------
+*December 8, 2020*
+
+### Added
+- Cookie support for when `setCookies` is enabled via the consuming app.
+- Test coverage for changes.
+
+v4.0.0-beta.8
+------------------------------
+*December 4, 2020*
+
+### Added
+- Base line $emit events for consuming apps to listen to
+    - `@address-search-focus`
+    - `@submit-saved-address`
+    - `@track-postcode-changed`
+    - `@submit-valid-address`
+    - `@searchbox-error`
+- event-types folder to hold events specific constants.
+- Tests to cover changes to events.
+
+
 v4.0.0-beta.7
 ------------------------------
 *December 3, 2020*
