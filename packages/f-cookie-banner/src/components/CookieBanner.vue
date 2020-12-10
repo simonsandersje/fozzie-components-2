@@ -129,6 +129,7 @@ export default {
             this.setCookieBannerCookie('necessary');
             this.dataLayerPush('necessary');
             this.resendEvents();
+            this.removeUnnecessaryCookies();
             this.isHidden = true;
         },
         /**
@@ -185,14 +186,16 @@ export default {
          * Check for excluded cookies/storage
          */
         isNotExcluded (cookieName) {
-            let isMatch = true;
-            let i;
-            const excludedList = this.copy.cookieExclusionList;
-            for (i = 0; i < excludedList.length; i++) {
-                const regex = new RegExp(excludedList[i].replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
-                if (regex.test(cookieName) && isMatch) isMatch = false;
+            return this.copy.config.cookieExclusionList.every(arrVal => cookieName.lastIndexOf(arrVal, arrVal.length -1) === -1);
+        },
+        /**
+         * Remove unnecessary cookies
+         */
+        removeUnnecessaryCookies (cookieName) {
+            const cookies = Object.keys(this.$cookies.getAll());
+            for (let cookie in cookies) {
+                if (this.isNotExcluded(cookies[cookie])) this.$cookies.remove(cookies[cookie]);
             }
-            return isMatch;
         },
         /**
          * Resend GTM events
