@@ -96,6 +96,16 @@ export default {
         }
     },
 
+    watch: {
+        isHidden (newVal) {
+            if (newVal) {
+                this.hideBanner = true;
+            } else {
+                this.hideBanner = false;
+            }
+        }
+    },
+
     data () {
         const locale = globalisationServices.getLocale(tenantConfigs, this.locale, this.$i18n);
         const localeConfig = tenantConfigs[locale];
