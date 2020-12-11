@@ -1,7 +1,7 @@
 <template>
     <div
         ref="cookieBanner"
-        :class="[$style['c-cookieBanner'], $style['c-cookieBanner-overlay'], { [$style['c-cookieBanner--hidden']]: isHidden }]"
+        :class="[$style['c-cookieBanner'], $style['c-cookieBanner-overlay'], { [$style['c-cookieBanner--hidden']]: hideBanner }]"
         attr="data-cookie-consent-overlay"
         :aria-hidden="isHidden">
         <div
@@ -100,10 +100,12 @@ export default {
         const locale = globalisationServices.getLocale(tenantConfigs, this.locale, this.$i18n);
         const localeConfig = tenantConfigs[locale];
         const theme = globalisationServices.getTheme(locale);
+        const hideBanner = false;
 
         return {
             copy: { ...localeConfig },
-            theme
+            theme,
+            hideBanner
         };
     },
 
@@ -120,7 +122,7 @@ export default {
         acceptActions () {
             this.setCookieBannerCookie('full');
             this.dataLayerPush('full');
-            this.isHidden = true;
+            this.hideBanner = true;
         },
         /**
          * Actions for "Accept only required cookies" button
@@ -130,7 +132,7 @@ export default {
             this.dataLayerPush('necessary');
             this.resendEvents();
             this.removeUnnecessaryCookies();
-            this.isHidden = true;
+            this.hideBanner = true;
         },
         /**
          * Set focus to the cookie consent banner title for accessibility
@@ -143,7 +145,7 @@ export default {
          * Check if the cookie banner has been shown to this user
          */
         checkCookieBannerCookie () {
-            this.isHidden = this.$cookies.get('je-cookieConsent') === 'full' || this.$cookies.get('je-cookieConsent') === 'necessary';
+            this.hideBanner = this.$cookies.get('je-cookieConsent') === 'full' || this.$cookies.get('je-cookieConsent') === 'necessary';
         },
         /**
          * Set the cookie for the user's choice
@@ -168,7 +170,7 @@ export default {
          */
         removeLegacyCookieBanners () {
             const oldCookieBanner = document.querySelector('[data-cookiebanner]');
-            const sitecoreCookieBanner = document.getElementsByClassName('cookie-policy')[0];
+            const [sitecoreCookieBanner] = document.getElementsByClassName('cookie-policy');
             const menuWebCookieBanner = document.querySelector('[data-cookie-anchor]');
             if (typeof oldCookieBanner !== 'undefined' && oldCookieBanner !== null) oldCookieBanner.innerHTML = '';
             if (typeof sitecoreCookieBanner !== 'undefined' && sitecoreCookieBanner !== null) sitecoreCookieBanner.innerHTML = '';
@@ -186,15 +188,15 @@ export default {
          * Check for excluded cookies/storage
          */
         isNotExcluded (cookieName) {
-            return this.copy.config.cookieExclusionList.every(arrVal => cookieName.lastIndexOf(arrVal, arrVal.length -1) === -1);
+            return this.copy.config.cookieExclusionList.every(arrVal => cookieName.lastIndexOf(arrVal, arrVal.length - 1) === -1);
         },
         /**
          * Remove unnecessary cookies
          */
-        removeUnnecessaryCookies (cookieName) {
+        removeUnnecessaryCookies () {
             const cookies = Object.keys(this.$cookies.getAll());
-            for (let cookie in cookies) {
-                if (this.isNotExcluded(cookies[cookie])) this.$cookies.remove(cookies[cookie]);
+            for (let i = 0; i < cookies.length; i++) {
+                if (this.isNotExcluded(cookies[i])) this.$cookies.remove(cookies[i]);
             }
         },
         /**
