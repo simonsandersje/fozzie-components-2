@@ -1,6 +1,6 @@
 import { getAccessibilityTestResults } from '../../../../../test/utils/axe-helper';
 
-describe('Accessibility tests', () => {
+xdescribe('Accessibility tests', () => {
     beforeEach(() => {
         // Arrange
         browser.url('http://localhost:8080');

@@ -32,8 +32,7 @@
     "lint": "vue-cli-service lint",
     "lint:fix": "yarn lint --fix",
     "lint:style": "vue-cli-service lint:style",
-    "test-component:chrome": "run-p --race demo webdriver:delay:chrome",
-    "test:wait-for-server": "node ../../test/infrastructure/healthcheck.js",
+    "test": "vue-cli-service test:unit",
     "webdriver:delay:chrome": "yarn test:wait-for-server && yarn webdriver:start:chrome",
     "webdriver:start:chrome": "wdio ../../wdio.conf.js"
   },
@@ -41,9 +40,8 @@
     "extends @justeat/browserslist-config-fozzie"
   ],
   "dependencies": {
-    "@justeat/f-button": "0.2.0",
-    "@justeat/f-card": "0.8.0",
-    "@justeat/f-services": "1.0.0"
+    "@justeat/f-button": "0.4.1",
+    "@justeat/f-services": "1.7.0"
   },
   "peerDependencies": {
     "@justeat/browserslist-config-fozzie": ">=1.1.1"
