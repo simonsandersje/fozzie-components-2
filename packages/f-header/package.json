@@ -28,12 +28,11 @@
   "scripts": {
     "prepublishOnly": "yarn && yarn lint && yarn test && yarn build",
     "build": "vue-cli-service build --target lib --name f-header ./src/index.js",
-    "demo": "vue serve --port 8080 ./src/demo/Index.vue",
     "lint": "vue-cli-service lint --no-fix",
     "lint:fix": "yarn lint --fix",
     "lint:style": "vue-cli-service lint:style",
     "report": "cd ../.. && yarn report",
-    "storybook:serve-webdriver": "cd ../storybook && storybook:serve-static",
+    "storybook:serve-webdriver": "lerna run storybook:serve-static --stream",
     "test": "vue-cli-service test:unit", 
     "test-component:chrome": "run-p --race storybook:serve-webdriver webdriver:delay:chrome",
     "test:wait-for-server": "node ../../test/infrastructure/healthcheck.js",

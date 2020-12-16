@@ -10,7 +10,7 @@ export default {
             firstName: '',
             mobileNumber: ''
         },
-        fulfillment: {
+        fulfilment: {
             times: [],
             address: {
                 line1: '',
@@ -22,7 +22,9 @@ export default {
         notes: [],
         isFulfillable: true,
         notices: [],
-        messages: []
+        messages: [],
+        authToken: '',
+        isLoggedIn: false
     }),
 
     actions: {
@@ -54,26 +56,36 @@ export default {
          * Post the checkout details to the backend.
          *
          * @param {Object} commit - Automatically handled by Vuex to be able to commit mutations.
+         * @param {Object} state - Automatically handled by Vuex to be able to retrieve state.
          * @param {Object} payload - Parameter with the different configurations for the request.
          */
         // eslint-disable-next-line no-unused-vars
-        postCheckout: async ({ commit }, payload) => {
+        postCheckout: async ({ commit, state }, payload) => {
             // TODO: deal with exceptions and handle this action properly (when the functionality is ready)
             const {
                 url, tenant, data, timeout
             } = payload;
 
+            const authHeader = state.authToken && `Bearer ${state.authToken}`;
+
             const config = {
                 method: 'post',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Accept-Tenant': tenant
+                    'Accept-Tenant': tenant,
+                    ...(state.isLoggedIn && {
+                        Authorization: authHeader
+                    })
                 },
                 timeout
             };
 
             // eslint-disable-next-line no-unused-vars
             const response = await axios.post(url, data, config);
+        },
+
+        setAuthToken: ({ commit }, authToken) => {
+            commit('updateAuth', authToken);
         }
     },
 
@@ -82,7 +94,7 @@ export default {
             id,
             serviceType,
             customer,
-            fulfillment,
+            fulfilment,
             notes,
             isFulfillable,
             notices,
@@ -96,22 +108,27 @@ export default {
                 state.customer.mobileNumber = customer.phoneNumber;
             }
 
-            state.fulfillment.times = fulfillment.times;
+            state.fulfilment.times = fulfilment.times;
 
-            if (fulfillment.address) {
+            if (fulfilment.address) {
                 /* eslint-disable prefer-destructuring */
-                state.fulfillment.address.line1 = fulfillment.address.lines[0];
-                state.fulfillment.address.line2 = fulfillment.address.lines[1];
-                state.fulfillment.address.city = fulfillment.address.lines[3];
+                state.fulfilment.address.line1 = fulfilment.address.lines[0];
+                state.fulfilment.address.line2 = fulfilment.address.lines[1];
+                state.fulfilment.address.city = fulfilment.address.lines[3];
                 /* eslint-enable prefer-destructuring */
 
-                state.fulfillment.address.postcode = fulfillment.address.postalCode;
+                state.fulfilment.address.postcode = fulfilment.address.postalCode;
             }
 
             state.notes = notes;
             state.isFulfillable = isFulfillable;
             state.notices = notices;
             state.messages = messages;
+        },
+
+        updateAuth: (state, authToken) => {
+            state.authToken = authToken;
+            state.isLoggedIn = !!authToken;
         }
     }
 };

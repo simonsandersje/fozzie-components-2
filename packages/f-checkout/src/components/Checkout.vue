@@ -39,25 +39,25 @@
                     v-if="isCheckoutMethodDelivery"
                     data-test-id="address-block" />
 
-                <form-selector/>
+                <form-selector />
 
                 <user-note data-test-id="user-note" />
 
-                <button-component
+                <f-button
                     :class="$style['c-checkout-allergyButton']"
                     button-type="link"
                     data-test-id="allergy-button">
                     {{ $t('allergyText') }}
-                </button-component>
+                </f-button>
 
-                <button-component
+                <f-button
                     :class="$style['c-checkout-submitButton']"
                     button-type="primary"
                     button-size="large"
                     is-full-width
                     data-test-id="confirm-payment-submit-button">
                     {{ $t('buttonText') }}
-                </button-component>
+                </f-button>
             </form>
         </card>
     </div>
@@ -69,7 +69,7 @@ import { required } from 'vuelidate/lib/validators';
 
 import Alert from '@justeat/f-alert';
 import '@justeat/f-alert/dist/f-alert.css';
-import ButtonComponent from '@justeat/f-button';
+import FButton from '@justeat/f-button';
 import '@justeat/f-button/dist/f-button.css';
 import { validations } from '@justeat/f-services';
 import { VueGlobalisationMixin } from '@justeat/f-globalisation';
@@ -98,7 +98,7 @@ export default {
     components: {
         AddressBlock,
         Alert,
-        ButtonComponent,
+        FButton,
         Card,
         ErrorMessage,
         FormField,
@@ -124,6 +124,11 @@ export default {
             type: Number,
             required: false,
             default: 1000
+        },
+
+        authToken: {
+            type: String,
+            default: ''
         }
     },
 
@@ -144,7 +149,7 @@ export default {
 
         Object.defineProperty($v, 'addressValidations', {
             enumerable: true,
-            get: () => this.$v.fulfillment.address
+            get: () => this.$v.fulfilment.address
         });
 
         return { $v };
@@ -155,7 +160,7 @@ export default {
             'id',
             'serviceType',
             'customer',
-            'fulfillment',
+            'fulfilment',
             'notes',
             'isFulfillable',
             'notices',
@@ -193,10 +198,15 @@ export default {
     watch: {
         async checkoutUrl () {
             await this.loadCheckout();
+        },
+
+        authToken () {
+            this.setAuthToken(this.authToken);
         }
     },
 
     async mounted () {
+        this.setAuthToken(this.authToken);
         await this.loadCheckout();
     },
 
@@ -219,7 +229,8 @@ export default {
     methods: {
         ...mapActions('checkout', [
             'getCheckout',
-            'postCheckout'
+            'postCheckout',
+            'setAuthToken'
         ]),
 
         /**
@@ -233,7 +244,7 @@ export default {
                 };
 
                 if (this.isCheckoutMethodDelivery) {
-                    checkoutData.address = this.fulfillment.address;
+                    checkoutData.address = this.fulfilment.address;
                 }
 
                 await this.postCheckout({
@@ -333,7 +344,7 @@ export default {
         * valid in current locale
         */
         isValidPostcode () {
-            return validations.isValidPostcode(this.fulfillment.address.postcode, this.$i18n.locale);
+            return validations.isValidPostcode(this.fulfilment.address.postcode, this.$i18n.locale);
         }
     },
 
@@ -348,7 +359,7 @@ export default {
         };
 
         if (this.isCheckoutMethodDelivery) {
-            deliveryDetails.fulfillment = {
+            deliveryDetails.fulfilment = {
                 address: {
                     line1: {
                         required
